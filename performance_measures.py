@@ -10,11 +10,11 @@ from sklearn.metrics import mean_squared_error, roc_curve, auc
 from keras.applications import VGG19
 from keras.models import Model
 
-# 1️⃣ Load the Trained Generator Model
+# 1️ Load the Trained Generator Model
 generator = load_model("/kaggle/input/srgan/keras/default/1/gen_e_25.h5")  # Update path if needed
 discriminator = load_model("/kaggle/input/srgan/keras/default/1/disc_e_25.h5")  # Load Discriminator
 
-# 2️⃣ Load Test Images from Kaggle Dataset
+# 2️ Load Test Images from Kaggle Dataset
 lr_dir = "/kaggle/working/lr_images"  # Update directory
 hr_dir = "/kaggle/working/hr_images"
 
@@ -28,11 +28,11 @@ hr_test = np.array([cv2.cvtColor(cv2.imread(os.path.join(hr_dir, img)), cv2.COLO
 # Normalize images (Scale pixel values to [0,1])
 lr_test, hr_test = lr_test / 255.0, hr_test / 255.0
 
-# 3️⃣ Generate Super-Resolved Images using Generator
+# 3️ Generate Super-Resolved Images using Generator
 pred_images = generator.predict(lr_test)
 pred_images = np.clip(pred_images, 0, 1)  # Ensure valid pixel range
 
-# 4️⃣ Load VGG19 Model (Pretrained on ImageNet) and Compute Perceptual Loss
+# 4️ Load VGG19 Model (Pretrained on ImageNet) and Compute Perceptual Loss
 vgg = VGG19(weights="imagenet", include_top=False, input_shape=(hr_test.shape[1], hr_test.shape[2], 3))
 feature_extractor = Model(inputs=vgg.input, outputs=vgg.layers[10].output)  # Extract mid-level features
 
@@ -41,12 +41,12 @@ perceptual_loss_scores = [
     for i in range(len(pred_images))
 ]
 
-# 5️⃣ Compute Performance Metrics
+# 5️ Compute Performance Metrics
 psnr_scores = [psnr(hr_test[i], pred_images[i], data_range=1.0) for i in range(len(pred_images))]
 ssim_scores = [ssim(hr_test[i], pred_images[i], channel_axis=2, data_range=1.0) for i in range(len(pred_images))]
 mse_scores = [mean_squared_error(hr_test[i].flatten(), pred_images[i].flatten()) for i in range(len(pred_images))]
 
-# 6️⃣ Create Performance Table
+# 6️ Create Performance Table
 df = pd.DataFrame({
     "Filename": lr_filenames,
     "PSNR": psnr_scores,
@@ -58,7 +58,7 @@ df = pd.DataFrame({
 print("\nPerformance Metrics Table:")
 print(df)
 
-# 7️⃣ Plot Pixel Difference Histogram
+# 7️ Plot Pixel Difference Histogram
 plt.figure(figsize=(8, 5))
 for i in range(len(pred_images)):
     plt.hist(np.abs(hr_test[i] - pred_images[i]).ravel(), bins=50, alpha=0.5, label=f"Image {i+1}")
@@ -69,7 +69,7 @@ plt.ylabel("Frequency")
 plt.legend()
 plt.show()
 
-# 8️⃣ Plot Performance Metrics Distribution
+# 8️ Plot Performance Metrics Distribution
 plt.figure(figsize=(10, 5))
 plt.hist(psnr_scores, bins=20, alpha=0.7, label="PSNR")
 plt.hist(ssim_scores, bins=20, alpha=0.7, label="SSIM")
@@ -83,7 +83,7 @@ plt.title("Performance Metrics Distribution")
 plt.show()
 
 
-# 9️⃣ Display Example Images (Low-Res, Super-Res, High-Res)
+# 9️ Display Example Images (Low-Res, Super-Res, High-Res)
 fig, axes = plt.subplots(3, 5, figsize=(15, 10))
 for i in range(5):
     axes[0, i].imshow(lr_test[i])
@@ -96,13 +96,13 @@ for ax in axes.flatten():
     ax.axis("off")
 plt.show()
 
-# 🔟 Print Average Scores
+#  Print Average Scores
 print(f"Avg PSNR: {np.mean(psnr_scores):.2f}")
 print(f"Avg SSIM: {np.mean(ssim_scores):.2f}")
 print(f"Avg MSE: {np.mean(mse_scores):.5f}")
 print(f"Avg Perceptual Loss: {np.mean(perceptual_loss_scores):.5f}")
 
-# 1️⃣1️⃣ Compute ROC Curve for Discriminator
+# 1️1️ Compute ROC Curve for Discriminator
 # Prepare Labels (1 for Real HR Images, 0 for Generated SR Images)
 real_labels = np.ones((len(hr_test), 1))  # Ground Truth HR Images
 fake_labels = np.zeros((len(pred_images), 1))  # Generated SR Images
